@@ -1,585 +1,283 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chatbot de Emergencias · Uruguay</title>
-<style>
-  :root{
-    --bg: #0F172A;
-    --panel: #1E293B;
-    --panel-subtle: #334155;
-    --ink: #F8FAFC;
-    --ink-soft: #94A3B8;
-    --navy-accent: #38BDF8;
-    --sun: #F59E0B;
-    --urgent: #EF4444;
-    --urgent-dark: #991B1B;
-    --line: #334155;
-    --radius: 16px;
-    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolución del Trabajo</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
 
-  *{ box-sizing: border-box; }
+        /* Animación de entrada para los elementos al hacer scroll */
+        .timeline-item {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-  html, body{
-    margin:0; padding:0; height:100%;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
+        .timeline-item.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-  .app{
-    max-width: 580px;
-    margin: 0 auto;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--panel);
-    border-left: 1px solid var(--line);
-    border-right: 1px solid var(--line);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  }
+        /* Triangulitos para las tarjetas (Desktop) */
+        .arrow-right::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            right: -14px;
+            transform: translateY(-50%);
+            border-width: 14px 0 14px 14px;
+            border-style: solid;
+            border-color: transparent transparent transparent rgba(30, 41, 59, 0.9);
+            transition: border-color 0.3s ease;
+        }
 
-  header.top{
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-    color: #fff;
-    padding: 24px 20px 20px;
-    position: relative;
-    border-bottom: 1px solid var(--line);
-  }
-  header.top h1{
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin: 0 0 6px;
-    letter-spacing: -0.02em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  header.top p{
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-  }
-  .badge911{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    margin-top:14px;
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    color: #FCA5A5;
-    font-weight: 500;
-  }
-  .badge911 b{ color: #FFF; font-weight: 700; }
+        .arrow-left::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: -14px;
+            transform: translateY(-50%);
+            border-width: 14px 14px 14px 0;
+            border-style: solid;
+            border-color: transparent rgba(30, 41, 59, 0.9) transparent transparent;
+            transition: border-color 0.3s ease;
+        }
 
-  .chips{
-    display:flex;
-    gap:8px;
-    padding: 12px 16px;
-    overflow-x: auto;
-    border-bottom: 1px solid var(--line);
-    background: rgba(15, 23, 42, 0.4);
-    scrollbar-width: none;
-  }
-  .chips::-webkit-scrollbar{ display:none; }
-  
-  .chip{
-    flex: 0 0 auto;
-    border: 1px solid var(--line);
-    background: var(--panel-subtle);
-    color: var(--ink);
-    padding: 8px 14px;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: var(--transition);
-  }
-  .chip:hover{ 
-    border-color: var(--navy-accent); 
-    background: #0284C7; 
-    color: #fff;
-    transform: translateY(-2px);
-  }
-  .chip.chip-all{
-    background: rgba(245, 158, 11, 0.15);
-    border-color: rgba(245, 158, 11, 0.4);
-    color: #FCD34D;
-  }
-  .chip.chip-all:hover{
-    background: var(--sun);
-    color: #0F172A;
-    border-color: var(--sun);
-  }
-
-  .chat{
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 16px;
-    display:flex;
-    flex-direction: column;
-    gap: 16px;
-    scroll-behavior: smooth;
-  }
-
-  .row{ 
-    display:flex; 
-    gap:10px; 
-    max-width: 100%; 
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeInUp 0.3s forwards ease-out;
-  }
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .row.bot{ justify-content: flex-start; }
-  .row.user{ justify-content: flex-end; }
-
-  .avatar{
-    flex: 0 0 auto;
-    width: 32px; height: 32px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #0284C7, #0369A1);
-    color: #fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-top: 2px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
-  }
-
-  .bubble{
-    max-width: 82%;
-    padding: 12px 16px;
-    border-radius: var(--radius);
-    font-size: 0.92rem;
-    line-height: 1.5;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  .row.bot .bubble{
-    background: var(--panel-subtle);
-    color: var(--ink);
-    border-top-left-radius: 4px;
-  }
-  .row.user .bubble{
-    background: #0284C7;
-    color: #fff;
-    border-top-right-radius: 4px;
-  }
-
-  .answer-card{
-    max-width: 85%;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    border-top-left-radius: 4px;
-    overflow: hidden;
-    background: var(--panel-subtle);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    transition: var(--transition);
-  }
-  .answer-card:hover {
-    border-color: var(--navy-accent);
-  }
-  .answer-card .head{
-    background: linear-gradient(135deg, var(--urgent) 0%, var(--urgent-dark) 100%);
-    color: #fff;
-    padding: 12px 16px;
-    display:flex;
-    align-items:center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .answer-card .head .num{
-    font-size: 1.4rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-  }
-
-.answer-card .head a.num-link {
-  color: #FFFFFF !important;
-  text-decoration: none !important;
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: transform 0.2s ease;
-}
-
-.answer-card .head a.num-link:hover,
-.answer-card .head a.num-link:focus,
-.answer-card .head a.num-link:active {
-  text-decoration: none !important;
-  transform: scale(1.05);
-}
-
-  .answer-card .head .label{
-    font-size: 0.78rem;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .answer-card .body{
-    padding: 14px 16px;
-    font-size: 0.88rem;
-    color: #CBD5E1;
-    line-height: 1.5;
-  }
-  .answer-card .body .institucion{
-    color: #FFF;
-    font-weight: 600;
-    display:block;
-    font-size: 0.95rem;
-    margin-bottom: 6px;
-  }
-
-  /* Estilos para el listado masivo de opciones */
-  .all-options-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-  .option-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.6);
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-  }
-  .option-item .name { font-weight: 600; color: #FFF; font-size: 0.88rem; }
-  .option-item .num-badge { 
-    background: #0284C7; 
-    color: #FFF; 
-    font-weight: 700; 
-    padding: 3px 8px; 
-    border-radius: 6px; 
-    font-size: 0.85rem;
-  }
-
-  .no-match .bubble{
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    color: #FDE68A;
-  }
-
-  form.inputbar{
-    display:flex;
-    gap:10px;
-    padding: 14px 16px;
-    border-top: 1px solid var(--line);
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(8px);
-  }
-  form.inputbar input{
-    flex:1;
-    border: 1px solid var(--line);
-    background: var(--panel-subtle);
-    color: #fff;
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 0.92rem;
-    outline: none;
-    font-family: inherit;
-    transition: var(--transition);
-  }
-  form.inputbar input::placeholder{ color: var(--ink-soft); }
-  form.inputbar input:focus{
-    border-color: var(--navy-accent);
-    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-  }
-  form.inputbar button{
-    border: none;
-    background: #0284C7;
-    color: #fff;
-    padding: 0 20px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    font-weight: 600;
-    transition: var(--transition);
-  }
-  form.inputbar button:hover{ 
-    background: #0369A1; 
-    transform: translateY(-1px);
-  }
-
-  .disclaimer{
-    font-size: 0.72rem;
-    color: var(--ink-soft);
-    text-align:center;
-    padding: 8px 16px 12px;
-    background: rgba(15, 23, 42, 0.8);
-  }
-</style>
+        /* Hover states for arrows matching card hover */
+        .group:hover .arrow-right::after {
+            border-left-color: rgba(15, 23, 42, 1);
+        }
+        .group:hover .arrow-left::after {
+            border-right-color: rgba(15, 23, 42, 1);
+        }
+        
+        /* Ocultar flechas en móvil ya que el diseño cambia */
+        @media (max-width: 768px) {
+            .arrow-right::after, .arrow-left::after {
+                display: none;
+            }
+        }
+    </style>
 </head>
-<body>
-<div class="app">
+<body class="antialiased selection:bg-cyan-500 selection:text-white">
 
-  <header class="top">
-    <h1>Chatbot de Emergencias</h1>
-    <p>Asistencia rápida para encontrar líneas de ayuda en Uruguay.</p>
-    <div class="badge911">Emergencia general: <b>911</b></div>
-  </header>
-
-  <div class="chips" id="chips"></div>
-
-  <div class="chat" id="chat"></div>
-
-  <form class="inputbar" id="form" autocomplete="off">
-    <input id="input" type="text" placeholder="Ej: hay un incendio, ver todas..." />
-    <button type="submit">Enviar</button>
-  </form>
-
-  <div class="disclaimer">Prototipo educativo. Verifique siempre los números con fuentes oficiales.</div>
-
-</div>
-
-<script>
-const CATEGORIES = [
-  {
-    id: "general",
-    chip: "Emergencia general",
-    keywords: ["emergencia", "911", "urgencia", "ayuda", "auxilio"],
-    numero: "911",
-    institucion: "Sistema Integral de Emergencias (SIE 911)",
-    nota: "Número unificado para policía, ambulancia y bomberos en todo el país."
-  },
-  {
-    id: "incendio",
-    chip: "Incendio",
-    keywords: ["incendio", "fuego", "quema", "humo", "llama", "bomberos"],
-    numero: "104",
-    institucion: "Dirección Nacional de Bomberos",
-    nota: "Llamá también al 911 si hay riesgo de vida. Confirmar vigencia del número por departamento."
-  },
-  {
-    id: "medica",
-    chip: "Emergencia médica",
-    keywords: ["medica", "médica", "salud", "ambulancia", "herido", "desmayo", "infarto", "accidente medico"],
-    numero: "105",
-    institucion: "Emergencia médica / asistencia sanitaria",
-    nota: "Si tenés emergencia móvil privada (UCM, SUAT, etc.), también podés llamar directamente a tu prestador."
-  },
-  {
-    id: "transito",
-    chip: "Accidente de tránsito",
-    keywords: ["transito", "tránsito", "choque", "accidente", "auto", "moto", "atropello"],
-    numero: "911",
-    institucion: "Policía Nacional de Tránsito",
-    nota: "Reportá ubicación exacta y si hay heridos para que despachen ambulancia."
-  },
-  {
-    id: "violencia",
-    chip: "Violencia doméstica",
-    keywords: ["violencia", "domestica", "doméstica", "genero", "género", "maltrato", "abuso"],
-    numero: "911",
-    institucion: "Policía / línea de atención a víctimas de violencia de género",
-    nota: "También existe la línea 0800 4141 de atención a mujeres en situación de violencia."
-  },
-  {
-    id: "servicios",
-    chip: "Cortes de servicios",
-    keywords: ["corte", "luz", "ute", "agua", "ose", "gas", "sin luz", "sin agua"],
-    numero: "0810 2000 (UTE) / 1930 (OSE)",
-    institucion: "UTE (electricidad) / OSE (agua)",
-    nota: "Números de atención de averías, no son líneas de emergencia policial."
-  },
-  {
-    id: "ambiental",
-    chip: "Ambiental / animales",
-    keywords: ["ambiental", "animal", "derrame", "contaminacion", "contaminación", "fauna"],
-    numero: "911",
-    institucion: "Ministerio de Ambiente / Guardia Ambiental",
-    nota: "Para denuncias ambientales urgentes o animales en peligro."
-  }
-];
-
-// ---------- Utilidades de matching ----------
-function normalize(str){
-  return str
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function findCategory(text){
-  const norm = normalize(text);
-  let best = null;
-  let bestScore = 0;
-  for (const cat of CATEGORIES){
-    let score = 0;
-    for (const kw of cat.keywords){
-      if (norm.includes(normalize(kw))) score++;
-    }
-    if (score > bestScore){
-      bestScore = score;
-      best = cat;
-    }
-  }
-  return bestScore > 0 ? best : null;
-}
-
-// ---------- Render del chat ----------
-const chatEl = document.getElementById("chat");
-const chipsEl = document.getElementById("chips");
-const formEl = document.getElementById("form");
-const inputEl = document.getElementById("input");
-
-function scrollToBottom(){
-  setTimeout(() => {
-    chatEl.scrollTop = chatEl.scrollHeight;
-  }, 50);
-}
-
-function addBotBubble(text){
-  const row = document.createElement("div");
-  row.className = "row bot";
-  row.innerHTML = `<div class="avatar">SIE</div><div class="bubble">${text}</div>`;
-  chatEl.appendChild(row);
-  scrollToBottom();
-}
-
-function addUserBubble(text){
-  const row = document.createElement("div");
-  row.className = "row user";
-  row.innerHTML = `<div class="bubble"></div>`;
-  row.querySelector(".bubble").textContent = text;
-  chatEl.appendChild(row);
-  scrollToBottom();
-}
-
-function addAnswerCard(cat){
-  // Limpia el número de espacios y caracteres especiales para el enlace tel:
-  const cleanNumber = cat.numero.replace(/\s+/g, '').split('/')[0];
-
-  const row = document.createElement("div");
-  row.className = "row bot";
-  row.innerHTML = `
-    <div class="avatar">SIE</div>
-    <div class="answer-card">
-      <div class="head">
-        <a href="tel:${cleanNumber}" class="num-link" title="Toca para llamar">${cat.numero} 📞</a>
-        <span class="label">${cat.chip}</span>
-      </div>
-      <div class="body">
-        <span class="institucion">${cat.institucion}</span>
-        ${cat.nota}
-      </div>
-    </div>
-  `;
-  chatEl.appendChild(row);
-  scrollToBottom();
-}
-
-function addAllOptionsCard(){
-  const row = document.createElement("div");
-  row.className = "row bot";
-  
-  let listHtml = CATEGORIES.map(cat => `
-    <div class="option-item">
-      <span class="name">${cat.chip}</span>
-      <span class="num-badge">${cat.numero}</span>
-    </div>
-  `).join('');
-
-  row.innerHTML = `
-    <div class="avatar">SIE</div>
-    <div class="answer-card" style="max-width: 90%;">
-      <div class="head" style="background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);">
-        <span class="num" style="font-size: 1.1rem;">Todas las líneas</span>
-        <span class="label">Directorio</span>
-      </div>
-      <div class="body">
-        <div class="all-options-list">
-          ${listHtml}
+    <header class="relative pt-20 pb-12 px-4 text-center overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-cyan-900/20 to-transparent z-0"></div>
+        <div class="relative z-10 max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-6 tracking-tight">
+                Evolución del Trabajo
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400 font-light leading-relaxed max-w-2xl mx-auto">
+                Anthony Silva - Walter Montejo - Jose Palermo <br> 3°MH
+            </p>
         </div>
-      </div>
-    </div>
-  `;
-  chatEl.appendChild(row);
-  scrollToBottom();
-}
+    </header>
 
-function addNoMatch(){
-  const row = document.createElement("div");
-  row.className = "row bot no-match";
-  row.innerHTML = `<div class="avatar">SIE</div><div class="bubble">No encontré una categoría exacta para eso. Puedes tocar <b>"📋 Ver todas"</b> arriba para desplegar el directorio completo.</div>`;
-  chatEl.appendChild(row);
-  scrollToBottom();
-}
+    <main class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mb-20">
+        
+        <!-- Línea central brillante -->
+        <div class="absolute left-8 md:left-1/2 transform md:-translate-x-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-500 via-blue-500 to-yellow-500 shadow-[0_0_15px_rgba(6,182,212,0.5)] z-0 rounded-full"></div>
 
-// ---------- Render Chips ----------
-function renderChips(){
-  // Botón especial para mostrar todas las opciones
-  const allChip = document.createElement("button");
-  allChip.className = "chip chip-all";
-  allChip.type = "button";
-  allChip.textContent = "📋 Ver todas";
-  allChip.addEventListener("click", () => {
-    addUserBubble("Ver todas las opciones");
-    setTimeout(addAllOptionsCard, 200);
-  });
-  chipsEl.appendChild(allChip);
+        <div class="relative z-10">
 
-  // Chips individuales
-  CATEGORIES.forEach(cat => {
-    const chip = document.createElement("button");
-    chip.className = "chip";
-    chip.type = "button";
-    chip.textContent = cat.chip;
-    chip.addEventListener("click", () => {
-      addUserBubble(cat.chip);
-      setTimeout(() => addAnswerCard(cat), 200);
-    });
-    chipsEl.appendChild(chip);
-  });
-}
+            <!-- Hito 1: Texto Izquierda / Imagen Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <!-- Texto (Izquierda) -->
+                <div class="w-full md:w-[45%] md:text-right group cursor-default order-2 md:order-1 mt-6 md:mt-0">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(34,211,238,0.15)] hover:border-cyan-500/50 arrow-right text-left md:text-right">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-cyan-950 uppercase rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]">
+                            Hasta 3.500 a.C.
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Prehistoria: Subsistencia y División</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            Durante el Paleolítico, el trabajo no existía como concepto; cazar y recolectar era sinónimo de supervivencia. El gran salto ocurrió en el Neolítico (aprox. 10.000 a.C.) con la Revolución Agrícola. Al establecerse en un solo lugar y domesticar animales, se generaron excedentes de comida, lo que permitió la primera división del trabajo: mientras unos cultivaban, otros podían dedicarse a la alfarería, la confección o la defensa.
+                        </p>
+                    </div>
+                </div>
+                <!-- Nodo Central -->
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-cyan-400 rounded-full z-20 shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
+                <!-- Imagen (Derecha) -->
+                <div class="w-full md:w-[45%] order-1 md:order-2">
+                    <img src="https://i.blogs.es/5d270e/portada/1366_2000.jpg" alt="Prehistoria" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+            </div>
 
-renderChips();
+            <!-- Hito 2: Imagen Izquierda / Texto Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <!-- Imagen (Izquierda) -->
+                <div class="w-full md:w-[45%] hidden md:block">
+                    <img src="https://s1.abcstatics.com/abc/www/multimedia/historia/2025/05/19/piramides-Egipto-construccion-RgSKzizeCzWCBEtZ2y45h9M-1200x840@diario_abc.jpg" alt="Edad Antigua" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <!-- Nodo Central -->
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-yellow-400 rounded-full z-20 shadow-[0_0_10px_rgba(250,204,21,0.8)]"></div>
+                <!-- Texto (Derecha) -->
+                <div class="w-full md:w-[45%] group cursor-default">
+                    <!-- Imagen en móvil (se mueve arriba del texto) -->
+                    <img src="https://s1.abcstatics.com/abc/www/multimedia/historia/2025/05/19/piramides-Egipto-construccion-RgSKzizeCzWCBEtZ2y45h9M-1200x840@diario_abc.jpg" alt="Edad Antigua" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 mb-6 md:hidden">
+                    
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(250,204,21,0.15)] hover:border-yellow-500/50 arrow-left text-left">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-yellow-950 uppercase rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]">
+                            3.500 a.C. - Siglo V d.C.
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Edad Antigua: Esclavitud y Oficios</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            En civilizaciones como Egipto, Grecia y Roma, el modelo económico se sostenía principalmente sobre el trabajo esclavo (prisioneros de guerra o deudores) para la agricultura y las grandes obras públicas. Paralelamente, en las ciudades comenzaron a consolidarse oficios especializados independientes como herreros, carpinteros, médicos y comerciantes, sentando las bases del comercio antiguo.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-// ---------- Envío de texto libre ----------
-formEl.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const text = inputEl.value.trim();
-  if (!text) return;
-  addUserBubble(text);
-  inputEl.value = "";
+            <!-- Hito 3: Texto Izquierda / Imagen Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <div class="w-full md:w-[45%] md:text-right group cursor-default order-2 md:order-1 mt-6 md:mt-0">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(34,211,238,0.15)] hover:border-cyan-500/50 arrow-right text-left md:text-right">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-cyan-950 uppercase rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]">
+                            Siglo V - Siglo XV
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Edad Media: Feudalismo y Gremios</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            Con la caída del Imperio Romano, la economía se vuelve rural. El trabajo se organiza bajo el feudalismo: los campesinos y siervos trabajan la tierra de un señor feudal a cambio de protección y una parte de la cosecha. En las ciudades medievales nacen los gremios, asociaciones de artesanos que regulaban estrictamente los precios, la calidad y la enseñanza de los oficios (jerarquía de aprendiz, oficial y maestro).
+                        </p>
+                    </div>
+                </div>
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-cyan-400 rounded-full z-20 shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
+                <div class="w-full md:w-[45%] order-1 md:order-2">
+                    <img src="https://drakkarhistoria.com/wp-content/uploads/2021/09/jydske_lov_gives_-_rasmus_christiansen_17023_-_cropped.png?w=816" alt="Edad Media" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+            </div>
 
-  setTimeout(() => {
-    const norm = normalize(text);
-    // Verificar si solicita ver todo explícitamente por texto
-    if (norm.includes("todas") || norm.includes("opciones") || norm.includes("lista") || norm.includes("directorio")){
-      addAllOptionsCard();
-      return;
-    }
+            <!-- Hito 4: Imagen Izquierda / Texto Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <div class="w-full md:w-[45%] hidden md:block">
+                    <img src="https://redhistoria.com/wp-content/uploads/2019/07/mercantilismo.png" alt="Edad Moderna" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-yellow-400 rounded-full z-20 shadow-[0_0_10px_rgba(250,204,21,0.8)]"></div>
+                <div class="w-full md:w-[45%] group cursor-default">
+                    <img src="https://redhistoria.com/wp-content/uploads/2019/07/mercantilismo.png" alt="Edad Moderna" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 mb-6 md:hidden">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(250,204,21,0.15)] hover:border-yellow-500/50 arrow-left text-left">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-yellow-950 uppercase rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]">
+                            Siglo XV - Siglo XVIII
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Edad Moderna: Mercantilismo</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            El descubrimiento de nuevas rutas comerciales y continentes impulsa un comercio global masivo. Surge la burguesía comercial y los primeros bancos modernos. El trabajo artesanal comienza a trasladarse lentamente a talleres manufactureros más grandes, donde un solo dueño concentraba las herramientas y la materia prima, dando los primeros pasos hacia el capitalismo.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-    const match = findCategory(text);
-    if (match){
-      addAnswerCard(match);
-    } else {
-      addNoMatch();
-    }
-  }, 250);
-});
+            <!-- Hito 5: Texto Izquierda / Imagen Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <div class="w-full md:w-[45%] md:text-right group cursor-default order-2 md:order-1 mt-6 md:mt-0">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(34,211,238,0.15)] hover:border-cyan-500/50 arrow-right text-left md:text-right">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-cyan-950 uppercase rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]">
+                            Finales del Siglo XVIII - XIX
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Primera Revolución Industrial: La Mecanización</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            El cambio más drástico de la historia. La invención de la máquina de vapor lleva a la creación de las fábricas. El trabajo manual es reemplazado por la maquinaria. Nace la figura del obrero asalariado moderno, pero bajo condiciones extremas: jornadas de 14 a 16 horas, trabajo infantil y cero regulaciones de seguridad. Esto desencadena el nacimiento del movimiento obrero y los sindicatos.
+                        </p>
+                    </div>
+                </div>
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-cyan-400 rounded-full z-20 shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
+                <div class="w-full md:w-[45%] order-1 md:order-2">
+                    <img src="https://www.marinersmuseum.org/wp-content/uploads/2013/01/LP2944-MilwaukeeRailroad-1.jpg" alt="Primera Revolución Industrial" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+            </div>
 
-// ---------- Mensaje inicial ----------
-addBotBubble("Hola 👋 Preguntame a quién llamar ante una emergencia o seleccioná una de las opciones.");
-</script>
+            <!-- Hito 6: Imagen Izquierda / Texto Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <div class="w-full md:w-[45%] hidden md:block">
+                    <img src=https://upload.wikimedia.org/wikipedia/commons/9/9e/BASF_Werk_Ludwigshafen_1881.JPG?utm_source=es.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled" alt="Segunda Revolución Industrial" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-yellow-400 rounded-full z-20 shadow-[0_0_10px_rgba(250,204,21,0.8)]"></div>
+                <div class="w-full md:w-[45%] group cursor-default">
+                    <img src=https://upload.wikimedia.org/wikipedia/commons/9/9e/BASF_Werk_Ludwigshafen_1881.JPG?utm_source=es.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled" alt="Segunda Revolución Industrial" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 mb-6 md:hidden">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(250,204,21,0.15)] hover:border-yellow-500/50 arrow-left text-left">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-yellow-950 uppercase rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]">
+                            Finales del Siglo XIX - Mitad del XX
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Segunda Revolución Industrial: Producción en Cadena</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            Con la llegada de la electricidad y el petróleo, el trabajo se transforma mediante el Taylorismo y el Fordismo (la línea de ensamblaje). La producción se masifica y los costos caen. Tras décadas de luchas sindicales, se conquistan derechos laborales fundamentales: la jornada de 8 horas, el descanso dominical, el salario mínimo y las vacaciones pagas. Surge un enorme sector administrativo ("cuellos blancos").
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hito 7: Texto Izquierda / Imagen Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-24 pl-12 md:pl-0">
+                <div class="w-full md:w-[45%] md:text-right group cursor-default order-2 md:order-1 mt-6 md:mt-0">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(34,211,238,0.15)] hover:border-cyan-500/50 arrow-right text-left md:text-right">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-cyan-950 uppercase rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]">
+                            Finales del Siglo XX
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Era Digital: Conocimiento y Servicios</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            La informática, la computadora personal y la llegada de Internet desplazan el peso económico de la industria manufacturera al sector servicios y la gestión de la información. El esfuerzo físico pierde protagonismo frente al "trabajo del conocimiento". Comienza la globalización del trabajo, donde una empresa puede operar en múltiples países simultáneamente.
+                        </p>
+                    </div>
+                </div>
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-cyan-400 rounded-full z-20 shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
+                <div class="w-full md:w-[45%] order-1 md:order-2">
+                    <img src="https://media.telenoche.com.uy/p/50d772d81bed9a2ebeb387b4ec35db0a/adjuntos/329/imagenes/000/163/0000163633/1200x675/smart/windows-xppng.png" alt="Era Digital" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+            </div>
+
+            <!-- Hito 8: Imagen Izquierda / Texto Derecha -->
+            <div class="timeline-item flex flex-col md:flex-row justify-between items-center w-full mb-12 pl-12 md:pl-0">
+                <div class="w-full md:w-[45%] hidden md:block">
+                    <img src="https://images.ctfassets.net/h9i30ml9c3lu/4oD6qvVqoDg9vkdmxcMJRf/f0f1c114118a24eb7163e8a1cb05d3f5/faizur-rehman-pHPzdEHN6Os-unsplash__1_.jpg" alt="Actualidad" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <div class="absolute left-8 md:left-1/2 transform -translate-x-1/2 w-6 h-6 bg-slate-900 border-4 border-yellow-400 rounded-full z-20 shadow-[0_0_10px_rgba(250,204,21,0.8)]"></div>
+                <div class="w-full md:w-[45%] group cursor-default">
+                    <img src="https://images.ctfassets.net/h9i30ml9c3lu/4oD6qvVqoDg9vkdmxcMJRf/f0f1c114118a24eb7163e8a1cb05d3f5/faizur-rehman-pHPzdEHN6Os-unsplash__1_.jpg" alt="Actualidad" class="w-full h-64 object-cover rounded-2xl shadow-xl border border-slate-700 opacity-80 mb-6 md:hidden">
+                    <div class="relative bg-slate-800/90 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(250,204,21,0.15)] hover:border-yellow-500/50 arrow-left text-left">
+                        <span class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-yellow-950 uppercase rounded-full bg-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]">
+                            Siglo XXI
+                        </span>
+                        <h2 class="text-2xl font-bold text-white mb-4">Actualidad: Industria 4.0 y Flexibilidad</h2>
+                        <p class="text-slate-300 leading-relaxed">
+                            El trabajo se deslocaliza. El modelo de 9 a 5 en una oficina compite con el trabajo remoto, la automatización avanzada y la "economía gig" (trabajadores independientes en plataformas digitales, como conductores o freelancers). La inteligencia artificial comienza a asumir tareas cognitivas, obligando a los trabajadores a adaptarse y aprender habilidades tecnológicas y creativas de forma continua.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const items = document.querySelectorAll('.timeline-item');
+            
+            // IntersectionObserver para añadir la clase 'show' cuando el elemento entra en pantalla
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('show');
+                        // Dejamos de observar para que la animación solo ocurra una vez
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.15 // Se activa cuando el 15% del elemento es visible
+            });
+
+            items.forEach(item => {
+                observer.observe(item);
+            });
+        });
+    </script>
 </body>
 </html>
